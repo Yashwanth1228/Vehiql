@@ -139,10 +139,28 @@
   background-size: 30px 30px ;
 }
 
+/* normal css */
+
+/* @layer utilities {
+  
+
+  .gradient-title {
+    background-image: linear-gradient(to bottom right, #3b82f6, #10b981);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    padding-right: 0.5rem;
+    padding-bottom: 0.5rem;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+} */
+
 @layer utilities {
   
 
   .gradient-title{
-    @apply bg-gradient-to-br from-blue-500 to-green-500 font-extrabold tracking-tighter pr-2 pb-2 text-transparent bg-clip-text;
+    @apply bg-linear-to-br from-blue-500 to-green-500 font-extrabold tracking-tighter pr-2 pb-2 text-transparent bg-clip-text;
   }
 }
