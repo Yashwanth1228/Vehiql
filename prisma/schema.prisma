@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          String             @id @default(uuid())
+  clerkUserId String             @unique // clerk userid
+  email       String             @unique
+  name        String?
+  imageUrl    String?
+  phone       String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  role        UserRole           @default(USER)
+  savedCars   UserSavedCar[]
+  testDrives  TestDriveBooking[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model Car {
+  id                String             @id @default(uuid())
+  make              String
+  model             String
+  year              Int
+  price             Decimal            @db.Decimal(10, 2)
+  mileage           Int
+  color             String
+  fuelType          String
+  transmission      String
+  bodyType          String
+  seats             Int?
+  description       String
+  status            CarStatus          @default(AVAILABLE)
+  featured          Boolean            @default(false)
+  images            String[] //Array of supabase storage URLs
+  savedBy           UserSavedCar[]
+  testDriveBookings TestDriveBooking[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([make, model])
+  @@index([bodyType])
+  @@index([price])
+  @@index([year])
+  @@index([status])
+  @@index([fuelType])
+  @@index([featured])
+}
+
+enum CarStatus {
+  AVAILABLE
+  UNAVAILABLE
+  SOLD
+}
+
+model DealerShipInfo {
+  id           String        @id @default(uuid())
+  name         String        @default("Vehiql Motors")
+  address      String        @default("69 Car Street, Malagala, Bangalore")
+  phone        String        @default("1 (555) 123-4567")
+  email        String        @default("contact@vehiql.com")
+  workingHours WorkingHour[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model WorkingHour {
+  id           String         @id @default(uuid())
+  dealershipId String
+  dealership   DealerShipInfo @relation(fields: [dealershipId], references: [id], onDelete: Cascade)
+  dayofWeek    DayOfWeek
+  openTime     String //Format: "HH:MM"  (24-hour)
+  closeTime    String //Format: "HH:MM"  (24-hour)
+  isOpen       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([dealershipId, dayofWeek])
+  @@index([dealershipId])
+  @@index([dayofWeek])
+  @@index([isOpen])
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model UserSavedCar {
+  id      String   @id @default(uuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  carId   String
+  car     Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  savedAt DateTime @default(now())
+
+  @@unique([userId, carId])
+  @@index([userId])
+  @@index([carId])
+}
+
+model TestDriveBooking {
+  id          String        @id @default(uuid())
+  carId       String
+  car         Car           @relation(fields: [carId], references: [id])
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  bookingDate DateTime      @db.Date
+  startTime   String //Format: "HH:MM" (24-hour)
+  endTime     String //Formate: "HH:MM" (24-hour)
+  status      BookingStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([carId])
+  @@index([userId])
+  @@index([bookingDate])
+  @@index([status])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}

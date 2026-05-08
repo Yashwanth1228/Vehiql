@@ -3,6 +3,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
+import { checkUser } from "@/lib/checkUser";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,12 +12,14 @@ export const metadata = {
   description: "Find your dream Car",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const user = await checkUser();
+
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className={`${inter.className} `}>
-          <Header />
+    <html lang="en">
+      <body className={`${inter.className} `}>
+        <ClerkProvider>
+          <Header user={user} />
           <main className="min-h-screen">{children}</main>
           <Toaster richColors />
 
@@ -25,8 +28,8 @@ export default function RootLayout({ children }) {
               <p>Footer</p>
             </div>
           </footer>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

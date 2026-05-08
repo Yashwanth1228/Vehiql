@@ -6,10 +6,13 @@ import React from "react";
 import { Button } from "./ui/button";
 import { ArrowLeft, CarFront, Heart, Layout } from "lucide-react";
 import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
+// import { checkUser } from "@/lib/checkUser";
 
-const Header = ({ isAdminPage = false }) => {
+const Header = ({ isAdminPage = false, user }) => {
+  // const user = await checkUser();
   const { isSignedIn } = useUser();
-  const isAdmin = false;
+  const isAdmin = user?.role === "ADMIN";
+  // const isAdmin = false;
 
   return (
     <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
