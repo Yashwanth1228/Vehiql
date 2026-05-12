@@ -41,12 +41,17 @@ Return ONLY valid JSON.
 {
   "make": "",
   "model": "",
+  "year": "",
   "color": "",
   "body_type": "",
+  "fuel_type": "",
+  "transmission": "",
+  "estimated_price": "",
+  "estimated_mileage": "",
   "description": ""
 }
 
-Identify the car details from this image.
+Analyze this car image and estimate the missing details if possible.
                 `,
               },
               {
@@ -73,18 +78,23 @@ Identify the car details from this image.
 
     console.log("AI TEXT:", aiText);
 
-    const parsedData = JSON.parse(aiText);
+    const cleanText = aiText
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    const parsedData = JSON.parse(cleanText);
 
     const carDetails = {
       make: parsedData.make || "Unknown",
       model: parsedData.model || "Unknown",
-      year: new Date().getFullYear(),
+      year: parsedData.year || new Date().getFullYear(),
       color: parsedData.color || "Unknown",
-      price: 0,
-      mileage: 0,
+      price: parsedData.estimated_price || 0,
+      mileage: parsedData.estimated_mileage || 0,
       bodyType: parsedData.body_type || "Unknown",
-      fuelType: "Unknown",
-      transmission: "Unknown",
+      fuelType: parsedData.fuel_type || "Unknown",
+      transmission: parsedData.transmission || "Unknown",
       description: parsedData.description || "",
       confidence: 0.9,
     };

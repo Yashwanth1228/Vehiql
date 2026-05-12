@@ -176,7 +176,7 @@ const AddCarForm = () => {
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        setuploadImages((prev) => [...prev, e.target.result]);
+        setUploadedImages((prev) => [...prev, e.target.result]);
       };
       reader.readAsDataURL(uploadedAiImage);
 
