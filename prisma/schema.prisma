@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,7 +10,7 @@ datasource db {
 
 model User {
   id          String             @id @default(uuid())
-  clerkUserId String             @unique // clerk userid
+  clerkUserId String             @unique // clerk user id
   email       String             @unique
   name        String?
   imageUrl    String?
@@ -47,7 +42,7 @@ model Car {
   description       String
   status            CarStatus          @default(AVAILABLE)
   featured          Boolean            @default(false)
-  images            String[] //Array of supabase storage URLs
+  images            String[] // Array of Supabase storage URLs
   savedBy           UserSavedCar[]
   testDriveBookings TestDriveBooking[]
   createdAt         DateTime           @default(now())
@@ -68,31 +63,33 @@ enum CarStatus {
   SOLD
 }
 
-model DealerShipInfo {
+// Single dealership configuration, if you have multiple dealerships, you can remove default values.
+model DealershipInfo {
   id           String        @id @default(uuid())
   name         String        @default("Vehiql Motors")
-  address      String        @default("69 Car Street, Malagala, Bangalore")
-  phone        String        @default("1 (555) 123-4567")
+  address      String        @default("69 Car Street, Autoville, CA 69420")
+  phone        String        @default("+1 (555) 123-4567")
   email        String        @default("contact@vehiql.com")
   workingHours WorkingHour[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
 
+// Working hours configuration
 model WorkingHour {
   id           String         @id @default(uuid())
   dealershipId String
-  dealership   DealerShipInfo @relation(fields: [dealershipId], references: [id], onDelete: Cascade)
-  dayofWeek    DayOfWeek
-  openTime     String //Format: "HH:MM"  (24-hour)
-  closeTime    String //Format: "HH:MM"  (24-hour)
+  dealership   DealershipInfo @relation(fields: [dealershipId], references: [id], onDelete: Cascade)
+  dayOfWeek    DayOfWeek
+  openTime     String // Format: "HH:MM" (24-hour)
+  closeTime    String // Format: "HH:MM" (24-hour)
   isOpen       Boolean        @default(true)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
-  @@unique([dealershipId, dayofWeek])
+  @@unique([dealershipId, dayOfWeek])
   @@index([dealershipId])
-  @@index([dayofWeek])
+  @@index([dayOfWeek])
   @@index([isOpen])
 }
 
@@ -126,8 +123,8 @@ model TestDriveBooking {
   userId      String
   user        User          @relation(fields: [userId], references: [id])
   bookingDate DateTime      @db.Date
-  startTime   String //Format: "HH:MM" (24-hour)
-  endTime     String //Formate: "HH:MM" (24-hour)
+  startTime   String // Format: "HH:MM" (24-hour)
+  endTime     String // Format: "HH:MM" (24-hour)
   status      BookingStatus @default(PENDING)
   notes       String?
   createdAt   DateTime      @default(now())

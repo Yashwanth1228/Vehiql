@@ -4,11 +4,10 @@ import { serializeCarData } from "@/lib/helper";
 import { db } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase";
 import { auth } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
-import { success } from "zod";
+import axios from "axios";
 
 //Function to convert File to base64
 async function fileToBase64(file) {
@@ -19,99 +18,90 @@ async function fileToBase64(file) {
 
 export async function processCarImageWithAI(file) {
   console.log("AI function called");
+
   try {
-    // CHeck if API Key is available
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error("Gemini API Key is not configruted");
-    }
-
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({
-      // model: "gemini-1.5-flash",
-      model: "gemini-2.0-flash",
-    });
-
     const base64Image = await fileToBase64(file);
 
-    const imagePart = {
-      inlineData: {
-        data: base64Image,
-        mimeType: file.type,
-      },
-    };
+    const imageUrl = `data:${file.type};base64,${base64Image}`;
 
-    // Define the prompt for car detail extraction
-    const prompt = `
-      Analyze this car image and extract the following information:
-      1. Make (manufacturer)
-      2. Model
-      3. Year (approximately)
-      4. Color
-      5. Body type (SUV, Sedan, Hatchback, etc.)
-      6. Mileage
-      7. Fuel type (your best guess)
-      8. Transmission type (your best guess)
-      9. Price (your best guess)
-      9. Short Description as to be added to a car listing
-
-      Format your response as a clean JSON object with these fields:
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
       {
-        "make": "",
-        "model": "",
-        "year": 0000,
-        "color": "",
-        "price": "",
-        "mileage": "",
-        "bodyType": "",
-        "fuelType": "",
-        "transmission": "",
-        "description": "",
-        "confidence": 0.0
-      }
+        model: "openai/gpt-4o-mini",
 
-      For confidence, provide a value between 0 and 1 representing how confident you are in your overall identification.
-      Only respond with the JSON object, nothing else.
-    `;
-    console.log("Sending request to Gemini...");
-    const result = await model.generateContent([imagePart, prompt]);
-    const response = await result.response;
-    const text = response.text();
-    const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `
+Return ONLY valid JSON.
 
-    // Parse the JSON response
-    try {
-      const carDetails = JSON.parse(cleanedText);
-
-      // Validate the response format
-      const requiredFields = ["make", "model", "year", "color"];
-      const missingFields = requiredFields.filter(
-        (field) => !(field in carDetails),
-      );
-
-      if (missingFields.length > 0) {
-        throw new Error(
-          `AI response missing required fields: ${missingFields.join(", ")}`,
-        );
-      }
-
-      // Return success response with data
-      return {
-        success: true,
-        data: carDetails,
-      };
-    } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError);
-      console.log("Raw response:", text);
-      return {
-        success: false,
-        error: "Failed to parse AI response",
-      };
-    }
-  } catch (error) {
-    throw new Error("Gemini API error:" + error.message);
-  }
+{
+  "make": "",
+  "model": "",
+  "color": "",
+  "body_type": "",
+  "description": ""
 }
 
+Identify the car details from this image.
+                `,
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: imageUrl,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    console.log("AI RESULT:", response.data);
+
+    const aiText = response.data?.choices?.[0]?.message?.content || "{}";
+
+    console.log("AI TEXT:", aiText);
+
+    const parsedData = JSON.parse(aiText);
+
+    const carDetails = {
+      make: parsedData.make || "Unknown",
+      model: parsedData.model || "Unknown",
+      year: new Date().getFullYear(),
+      color: parsedData.color || "Unknown",
+      price: 0,
+      mileage: 0,
+      bodyType: parsedData.body_type || "Unknown",
+      fuelType: "Unknown",
+      transmission: "Unknown",
+      description: parsedData.description || "",
+      confidence: 0.9,
+    };
+
+    return {
+      success: true,
+      data: carDetails,
+    };
+  } catch (error) {
+    console.error("AI ERROR:", error.response?.data || error.message);
+
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
 export async function addCar({ carData, images }) {
   try {
     const { userId } = await auth();
