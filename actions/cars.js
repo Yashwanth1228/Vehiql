@@ -28,6 +28,7 @@ export async function processCarImageWithAI(file) {
       "https://openrouter.ai/api/v1/chat/completions",
       {
         model: "openai/gpt-4o-mini",
+        temperature: 0,
 
         messages: [
           {
@@ -74,16 +75,23 @@ Analyze this car image and estimate the missing details if possible.
 
     console.log("AI RESULT:", response.data);
 
-    const aiText = response.data?.choices?.[0]?.message?.content || "{}";
+    const aiText = response.data?.choices?.[0]?.message?.content;
+
+    if (!aiText) {
+      throw new Error("AI returned empty response");
+    }
 
     console.log("AI TEXT:", aiText);
 
-    const cleanText = aiText
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+    function cleanJSON(text) {
+      return text
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+    }
 
-    const parsedData = JSON.parse(cleanText);
+    const cleanedText = cleanJSON(aiText);
+    const parsedData = JSON.parse(cleanedText);
 
     const carDetails = {
       make: parsedData.make || "Unknown",

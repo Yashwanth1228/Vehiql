@@ -9,14 +9,31 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { carMakes, featuredCars, bodyTypes, faqItems } from "@/lib/data";
+import { carMakes, bodyTypes, faqItems } from "@/lib/data";
 import { useUser } from "@clerk/nextjs";
 import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { getFeaturedCars } from "../../actions/home";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [featuredCars, setFeaturedCars] = useState([]);
   const { isSignedIn } = useUser();
+
+  useEffect(() => {
+    async function loadCars() {
+      try {
+        const cars = await getFeaturedCars();
+        setFeaturedCars(cars);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    loadCars();
+  }, []);
+
   return (
     <div className="pt-20 flex flex-col">
       {/* hero section */}
