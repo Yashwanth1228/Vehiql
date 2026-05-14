@@ -11,7 +11,7 @@ export const metadata = {
 const CarsPage = async () => {
   const filtersData = await getCarFilters();
   return (
-    <div className="conatiner mx-auto px-4 py-12">
+    <div className="conatiner mx-auto px-10 py-12">
       <h1 className="text-6xl mb-4 gradient-title">Browse Cars</h1>
 
       <div className="flex flex-col lg:flex-row gap-8">
