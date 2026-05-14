@@ -109,33 +109,46 @@ const AddCarForm = () => {
   const onAiDrop = (acceptedFiles) => {
     const file = acceptedFiles[0];
 
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size must be less than 5MB");
-        return;
-      }
+    if (!file) return;
 
-      setUploadedAiImage(file);
+    // allowed image types
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-        toast.success("Image uploaded successfully");
-      };
-
-      reader.readAsDataURL(file);
+    // validate type
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only JPG, PNG, and WEBP images are supported");
+      return;
     }
+
+    // validate size
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+
+    setUploadedAiImage(file);
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+      toast.success("Image uploaded successfully");
+    };
+
+    reader.readAsDataURL(file);
   };
+
   const { getRootProps: getAiRootProps, getInputProps: getAiInputProps } =
     useDropzone({
       onDrop: onAiDrop,
       accept: {
-        "image/*": [".jpeg", ".jpg", ".png", ".webp"],
+        "image/jpeg": [".jpeg", ".jpg"],
+        "image/png": [".png"],
+        "image/webp": [".webp"],
       },
       maxFiles: 1,
       multiple: false,
     });
-
   const {
     loading: processImageLoading,
     fn: processImageFn,
@@ -257,7 +270,7 @@ const AddCarForm = () => {
     accept: {
       "image/*": [".jpeg", ".jpg", ".png", ".webp"],
     },
-    muttiple: true,
+    multiple: true,
   });
 
   const removeImage = (index) => {
